@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Candidate Dashboard | JobPortal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .job-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .job-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+    }
+
+    .badge-location { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+    .badge-salary { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+
+    .status-badge {
+        padding: 0.4rem 1rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .status-applied { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .status-shortlisted { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-rejected { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    .resume-input {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--surface-border);
+    }
+
+    .custom-file-upload {
+        display: block;
+        width: 100%;
+        padding: 0.8rem;
+        background: rgba(15, 23, 42, 0.3);
+        border: 2px dashed var(--surface-border);
+        border-radius: var(--radius-md);
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+        margin-bottom: 1rem;
+        color: var(--text-dim);
+    }
+
+    .custom-file-upload:hover {
+        border-color: var(--primary);
+        color: var(--text-main);
+    }
+
+    .applied-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(2px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-lg);
+        z-index: 5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="margin-bottom: 3rem;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Hello, <span class="text-gradient">{{ request.user.username }}</span></h1>
+    <p style="color: var(--text-dim);">Find your next dream job today.</p>
+</header>
+
+<section style="margin-bottom: 4rem;">
+    <h2 style="display: flex; align-items: center; gap: 0.75rem;">
+        Available Jobs <span style="font-size: 0.9rem; background: var(--surface); padding: 0.2rem 0.6rem; border-radius: 6px; border: 1px solid var(--surface-border);">{{ jobs|length }}</span>
+    </h2>
+    
+    <div class="dashboard-grid">
+        {% for job in jobs %}
+            <div class="card job-card" style="position: relative;">
+                {% if job.id in applied_jobs %}
+                    <div class="applied-overlay">
+                        <span class="status-badge status-shortlisted" style="font-size: 1rem;">✓ Already Applied</span>
+                    </div>
+                {% endif %}
+
+                <div>
+                    <h3 style="font-size: 1.25rem; margin-bottom: 0.25rem;">{{ job.title }}</h3>
+                    <p style="color: var(--primary); font-weight: 600; margin-bottom: 1rem;">{{ job.company_name }}</p>
+                    
+                    <div style="display: flex; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <span class="job-badge badge-location">📍 {{ job.location }}</span>
+                        {% if job.salary %}
+                            <span class="job-badge badge-salary">💰 {{ job.salary }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p style="color: var(--text-dim); font-size: 0.9rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1.5rem;">
+                        {{ job.description }}
+                    </p>
+                </div>
+
+                {% if job.id not in applied_jobs %}
+                    <form method="post" enctype="multipart/form-data" class="resume-input">
+                        {% csrf_token %}
+                        <input type="hidden" name="job_id" value="{{ job.id }}">
+                        
+                        <label for="resume_{{ job.id }}" class="form-label" style="font-size: 0.8rem;">Upload Resume (PDF)</label>
+                        <input type="file" name="resume" id="resume_{{ job.id }}" accept=".pdf" required style="width: 100%; margin-bottom: 1rem; font-size: 0.8rem; background: transparent; color: var(--text-dim);">
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Apply Now</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
+                <p style="color: var(--text-dim);">No jobs are currently available. Check back soon!</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section>
+    <h2 style="margin-bottom: 1.5rem;">My Applications</h2>
+    
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for application in my_applications %}
+            <div class="card" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h3 style="margin-bottom: 0.25rem; font-size: 1.15rem;">{{ application.job.title }}</h3>
+                    <p style="color: var(--text-dim); font-size: 0.9rem;">{{ application.job.company_name }} • Applied on {{ application.applied_at|date:"M d, Y" }}</p>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 2rem;">
+                    <div>
+                        <span class="status-badge 
+                            {% if application.status == 'applied' %}status-applied
+                            {% elif application.status == 'shortlisted' %}status-shortlisted
+                            {% else %}status-rejected{% endif %}">
+                            {{ application.status|capfirst }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="card" style="text-align: center; padding: 3rem;">
+                <p style="color: var(--text-dim);">You haven't applied to any jobs yet. Start exploring!</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

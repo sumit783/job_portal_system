@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Recruiter Dashboard | JobPortal{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #10b981; /* Emerald for Recruiters */
+        --primary-glow: rgba(16, 185, 129, 0.4);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .job-card {
+        border-left: 4px solid var(--primary);
+    }
+
+    .job-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .applicant-counter {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--primary);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .applicant-counter:hover {
+        background: var(--primary);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; flex-wrap: wrap; gap: 2rem;">
+    <div>
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Recruiter <span class="text-gradient">Portal</span></h1>
+        <p style="color: var(--text-dim);">Welcome back, {{ request.user.username }}. Manage your talent pipeline.</p>
+    </div>
+    
+    <a href="{% url 'create_job' %}" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.1rem; border-radius: var(--radius-lg);">
+        <span style="font-size: 1.4rem; line-height: 0;">+</span> Post a New Job
+    </a>
+</header>
+
+<section>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid var(--surface-border); padding-bottom: 1rem;">
+        <h2 style="margin-bottom: 0;">My Active Postings</h2>
+        <span style="color: var(--text-dim); font-size: 0.9rem; font-weight: 500;">{{ jobs|length }} Total Jobs</span>
+    </div>
+    
+    <div class="dashboard-grid">
+        {% for job in jobs %}
+            <div class="card job-card animate-fade" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <h3 style="margin-bottom: 1rem; font-size: 1.35rem;">{{ job.title }}</h3>
+                    
+                    <div class="job-info">
+                        <span>📍 {{ job.location }}</span>
+                    </div>
+                    {% if job.salary %}
+                    <div class="job-info">
+                        <span>💰 {{ job.salary }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="job-info" style="margin-top: 1rem;">
+                        <span style="font-size: 0.8rem; opacity: 0.7;">Posted on {{ job.posted_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+                    <a href="{% url 'job_applicants' job.id %}" class="applicant-counter">
+                        View Applicants →
+                    </a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 5rem 2rem; border: 2px dashed var(--surface-border);">
+                <h3 style="color: var(--text-dim); margin-bottom: 1rem;">No jobs posted yet</h3>
+                <p style="color: var(--text-dim); margin-bottom: 2rem;">Start building your team by posting your first job opportunity.</p>
+                <a href="{% url 'create_job' %}" class="btn btn-primary">Create Your First Job</a>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

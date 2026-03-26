@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Applicants for {{ job.title }} | JobPortal{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #10b981; /* Emerald for Recruiters */
+        --primary-glow: rgba(16, 185, 129, 0.4);
+    }
+
+    .applicant-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .score-dial {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        border: 4px solid var(--surface-border);
+    }
+
+    .score-excellent { border-color: #10b981; color: #10b981; background: rgba(16, 185, 129, 0.1); }
+    .score-moderate { border-color: #f59e0b; color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+    .score-low { border-color: #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
+    .status-badge {
+        padding: 0.4rem 1rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: inline-block;
+        margin-bottom: 0.5rem;
+    }
+
+    .badge-applied { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-shortlisted { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-rejected { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    .action-form {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<header style="margin-bottom: 3rem;">
+    <a href="{% url 'recruiter_dashboard' %}" class="nav-link" style="font-size: 0.9rem; margin-bottom: 1rem; display: inline-block;">← Back to Dashboard</a>
+    <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Applicants for <span class="text-gradient">{{ job.title }}</span></h1>
+    <p style="color: var(--text-dim);">Review candidates prioritized by AI matching scores.</p>
+</header>
+
+<section>
+    {% for application in applications %}
+        <div class="card applicant-card animate-fade">
+            <div style="display: flex; gap: 2rem; align-items: flex-start;">
+                <div class="score-dial 
+                    {% if application.match_score >= 75 %}score-excellent
+                    {% elif application.match_score >= 50 %}score-moderate
+                    {% else %}score-low{% endif %}">
+                    <span style="font-size: 1.25rem;">{{ application.match_score|floatformat:0 }}%</span>
+                    <span style="font-size: 0.6rem; text-transform: uppercase;">Match</span>
+                </div>
+                
+                <div>
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.5rem;">{{ application.candidate.username }}</h3>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <span class="status-badge 
+                            {% if application.status == 'applied' %}badge-applied
+                            {% elif application.status == 'shortlisted' %}badge-shortlisted
+                            {% else %}badge-rejected{% endif %}">
+                            {{ application.status|capfirst }}
+                        </span>
+                    </div>
+
+                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                        {% if application.resume %}
+                            <a href="{{ application.resume.url }}" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.5rem 1rem;">
+                                📄 Download Resume
+                            </a>
+                        {% else %}
+                            <span style="color: var(--text-dim); font-size: 0.85rem;">No resume uploaded</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div style="border-left: 1px solid var(--surface-border); padding-left: 2rem;">
+                <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.75rem; font-weight: 600; text-transform: uppercase;">Update Status</p>
+                <form method="post" class="action-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="application_id" value="{{ application.id }}">
+                    <select name="status" class="form-control" style="width: auto; padding: 0.5rem; font-size: 0.9rem;">
+                        <option value="applied" {% if application.status == "applied" %}selected{% endif %}>Applied</option>
+                        <option value="shortlisted" {% if application.status == "shortlisted" %}selected{% endif %}>Shortlisted</option>
+                        <option value="rejected" {% if application.status == "rejected" %}selected{% endif %}>Rejected</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Update</button>
+                </form>
+            </div>
+        </div>
+    {% empty %}
+        <div class="card" style="text-align: center; padding: 5rem 2rem; border: 2px dashed var(--surface-border);">
+            <h3 style="color: var(--text-dim);">No applications yet</h3>
+            <p style="color: var(--text-dim);">When candidates apply, their AI match scores will appear here.</p>
+        </div>
+    {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Login | JobPortal{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <div class="card" style="width: 100%; max-width: 450px; text-align: center;">
+        <h1 class="text-gradient" style="font-size: 2.25rem; margin-bottom: 2rem;">Please Login</h1>
+        
+        <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2rem;">
+            <a href="{% url 'candidate_login' %}" class="btn btn-primary" style="padding: 1.25rem;">
+                <span style="font-size: 1.25rem; margin-right: 0.5rem;">👨‍🎓</span> Login as Candidate
+            </a>
+            <div style="display: flex; align-items: center; gap: 1rem; color: var(--text-dim);">
+                <hr style="flex: 1; border: 0; border-top: 1px solid var(--surface-border);">
+                <span>OR</span>
+                <hr style="flex: 1; border: 0; border-top: 1px solid var(--surface-border);">
+            </div>
+            <a href="{% url 'recruiter_login' %}" class="btn btn-primary" style="padding: 1.25rem; background: var(--secondary); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                <span style="font-size: 1.25rem; margin-right: 0.5rem;">💼</span> Login as Recruiter
+            </a>
+        </div>
+
+        <p style="margin-top: 3rem; color: var(--text-dim); font-size: 0.9rem;">
+            New to JobPortal? Contact your administrator for an account.
+        </p>
+    </div>
+</div>
+{% endblock %}
